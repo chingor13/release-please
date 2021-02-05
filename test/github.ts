@@ -620,7 +620,7 @@ describe('GitHub', () => {
       const commitsSinceSha = await github.commitsSince(commit => {
         // this commit is on page 2
         return commit.sha === 'c6d9dfb03aa2dbe1abc329592af60713fe28586d';
-      }, 1);
+      }, 10);
       expect(commitsSinceSha.length).to.eql(10);
       snapshot(commitsSinceSha);
       req.done();
@@ -710,7 +710,7 @@ describe('GitHub', () => {
       const commitWithPullRequest = await github.findMergeCommit(commit => {
         // this commit is the 2nd most recent
         return commit.sha === 'c6d9dfb03aa2dbe1abc329592af60713fe28586d';
-      }, 1);
+      }, 10);
       expect(commitWithPullRequest).to.be.undefined;
       req.done();
     });

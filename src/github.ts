@@ -491,7 +491,7 @@ export class GitHub {
     // only look at the last 250 or so commits to find the latest tag - we
     // don't want to scan the entire repository history if this repo has never
     // been released
-    const pull = await this.findMergedReleasePR([], prefix, preRelease, 10);
+    const pull = await this.findMergedReleasePR([], prefix, preRelease, 250);
     if (!pull) return await this.latestTagFallback(prefix, preRelease);
 
     // FIXME: this assumes that the version is in the branch name
@@ -667,22 +667,23 @@ export class GitHub {
    *
    * @param {CommitFilter} filter - Callback function that returns whether a
    *   commit/pull request matches certain criteria
-   * @param {number} maxPages - Limit the number of pages of results searched.
+   * @param {number} maxResults - Limit the number of results searched.
    *   Defaults to unlimited.
    * @returns {CommitWithPullRequest}
    */
   async findMergeCommit(
     filter: CommitFilter,
-    maxPages: number = Number.MAX_SAFE_INTEGER
+    maxResults: number = Number.MAX_SAFE_INTEGER
   ): Promise<CommitWithPullRequest | undefined> {
     let cursor: string | undefined = undefined;
     let found: CommitWithPullRequest | undefined = undefined;
-    let page = 1;
-    while (!found && page <= maxPages) {
+    let results = 0;
+    while (!found && results < maxResults) {
       const response: PullRequestHistory = await this.mergeCommitsGraphQL(
         cursor
       );
       found = response.data.find(commitWithPullRequest => {
+        results += 1;
         return filter(
           commitWithPullRequest.commit,
           commitWithPullRequest.pullRequest
@@ -692,7 +693,6 @@ export class GitHub {
         break;
       }
       cursor = response.pageInfo.endCursor;
-      page += 1;
     }
 
     return found;
@@ -704,23 +704,24 @@ export class GitHub {
    *
    * @param {CommitFilter} filter - Callback function that returns whether a
    *   commit/pull request matches certain criteria
-   * @param {number} maxPages - Limit the number of pages of results searched.
+   * @param {number} maxResults - Limit the number of results searched.
    *   Defaults to unlimited.
    * @returns {Commit[]} - List of commits to current branch
    */
   async commitsSince(
     filter: CommitFilter,
-    maxPages: number = Number.MAX_SAFE_INTEGER
+    maxResults: number = Number.MAX_SAFE_INTEGER
   ): Promise<Commit[]> {
     let cursor: string | undefined = undefined;
     const commits: Commit[] = [];
     let found: CommitWithPullRequest | undefined = undefined;
-    let page = 1;
-    while (!found && page <= maxPages) {
+    let results = 0;
+    while (!found && results < maxResults) {
       const response: PullRequestHistory = await this.mergeCommitsGraphQL(
         cursor
       );
       found = response.data.find(commitWithPullRequest => {
+        results += 1;
         if (
           filter(
             commitWithPullRequest.commit,
@@ -736,7 +737,6 @@ export class GitHub {
         break;
       }
       cursor = response.pageInfo.endCursor;
-      page += 1;
     }
 
     return commits;
@@ -847,7 +847,7 @@ export class GitHub {
    *   release pull requests that contain the specified component
    * @param {boolean} preRelease - Whether to include pre-release
    *   versions in the response. Defaults to true.
-   * @param {number} maxPages - Limit the number of pages of results searched.
+   * @param {number} maxResults - Limit the number of results searched.
    *   Defaults to unlimited.
    * @returns {MergedGitHubPR|undefined}
    */
@@ -855,7 +855,7 @@ export class GitHub {
     labels: string[],
     branchPrefix: string | undefined = undefined,
     preRelease: boolean = true,
-    maxPages: number = Number.MAX_SAFE_INTEGER,
+    maxResults: number = Number.MAX_SAFE_INTEGER,
   ): Promise<MergedGitHubPR | undefined> {
     branchPrefix = branchPrefix?.endsWith('-')
       ? branchPrefix.replace(/-$/, '')
@@ -905,7 +905,7 @@ export class GitHub {
         }
 
         return true;
-      }, maxPages
+      }, maxResults
     );
     return mergedCommit?.pullRequest;
   }
