@@ -667,11 +667,13 @@ export class GitHub {
    * @returns {CommitWithPullRequest}
    */
   async findMergeCommit(
-    filter: CommitFilter
+    filter: CommitFilter,
+    maxPages: number = Number.MAX_SAFE_INTEGER
   ): Promise<CommitWithPullRequest | undefined> {
     let cursor: string | undefined = undefined;
     let found: CommitWithPullRequest | undefined = undefined;
-    while (!found) {
+    let page = 1;
+    while (!found && page <= maxPages) {
       const response: PullRequestHistory = await this.mergeCommitsGraphQL(
         cursor
       );
@@ -685,6 +687,7 @@ export class GitHub {
         break;
       }
       cursor = response.pageInfo.endCursor;
+      page += 1;
     }
 
     return found;
@@ -698,11 +701,15 @@ export class GitHub {
    *   commit/pull request matches certain criteria
    * @returns {Commit[]} - List of commits to current branch
    */
-  async commitsSince(filter: CommitFilter): Promise<Commit[]> {
+  async commitsSince(
+    filter: CommitFilter,
+    maxPages: number = Number.MAX_SAFE_INTEGER
+  ): Promise<Commit[]> {
     let cursor: string | undefined = undefined;
     const commits: Commit[] = [];
     let found: CommitWithPullRequest | undefined = undefined;
-    while (!found) {
+    let page = 1;
+    while (!found && page <= maxPages) {
       const response: PullRequestHistory = await this.mergeCommitsGraphQL(
         cursor
       );
@@ -722,6 +729,7 @@ export class GitHub {
         break;
       }
       cursor = response.pageInfo.endCursor;
+      page += 1;
     }
 
     return commits;
