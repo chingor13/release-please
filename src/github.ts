@@ -854,8 +854,8 @@ export class GitHub {
   async findMergedReleasePR(
     labels: string[],
     branchPrefix: string | undefined = undefined,
-    preRelease: boolean = true,
-    maxResults: number = Number.MAX_SAFE_INTEGER,
+    preRelease = true,
+    maxResults: number = Number.MAX_SAFE_INTEGER
   ): Promise<MergedGitHubPR | undefined> {
     branchPrefix = branchPrefix?.endsWith('-')
       ? branchPrefix.replace(/-$/, '')
@@ -905,7 +905,8 @@ export class GitHub {
         }
 
         return true;
-      }, maxResults
+      },
+      maxResults
     );
     return mergedCommit?.pullRequest;
   }
